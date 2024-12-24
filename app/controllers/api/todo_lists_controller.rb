@@ -1,6 +1,6 @@
 module Api
   class TodoListsController < ApplicationController
-    before_action :set_resource, only: %i[show]
+    before_action :set_resource, only: %i[show update]
 
     # GET /api/todolists
     def index
@@ -16,11 +16,22 @@ module Api
 
     # POST /api/todolists
     def create
-      @todo_list = TodoList.new(params_for_create)
+      @todo_list = TodoList.new(required_params)
 
       respond_to do |format|
         format.json do
           @todo_list.save!
+
+          render json: @todo_list
+        end
+      end
+    end
+
+    # PUT|PATCH /api/todolist/:id
+    def update
+      respond_to do |format|
+        format.json do
+          @todo_list.update!(required_params)
 
           render json: @todo_list
         end
@@ -33,7 +44,7 @@ module Api
       @todo_list = TodoList.find(params[:id])
     end
 
-    def params_for_create
+    def required_params
       params.require(:todolist).permit(:name)
     end
   end

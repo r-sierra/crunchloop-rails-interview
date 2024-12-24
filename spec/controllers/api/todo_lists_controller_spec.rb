@@ -4,11 +4,14 @@ describe Api::TodoListsController do
   render_views
 
   let!(:todo_list) { TodoList.create(name: 'Setup RoR project') }
+  let(:format) { :json }
 
   shared_examples 'rejecting not supported mime formats' do
     context 'when format is HTML' do
+      let(:format) { :html }
+
       it 'raises a routing error' do
-        expect { get(:index) }
+        expect { make_request }
           .to raise_error(ActionController::RoutingError, 'Not supported format')
       end
     end
@@ -45,11 +48,31 @@ describe Api::TodoListsController do
     end
   end
 
+  shared_examples 'a request with invalid parameters' do
+    context 'when :todolist is empty' do
+      let(:params) { super().merge(todolist: {}) }
+      let(:expected_status_code) { :bad_request }
+      let(:expected_errors) { 'param is missing or the value is empty: todolist' }
+
+      it_behaves_like 'an invalid request'
+    end
+
+    context 'when :name is empty' do
+      let(:params) { super().merge(todolist: { name: '' }) }
+      let(:expected_status_code) { :bad_request }
+      let(:expected_errors) { ['Name can\'t be blank'] }
+
+      it_behaves_like 'an invalid request'
+    end
+  end
+
   describe 'GET index' do
+    subject(:make_request) { get(:index, format:) }
+
     it_behaves_like 'rejecting not supported mime formats'
 
     context 'when format is JSON' do
-      before { get(:index, format: :json) }
+      before { make_request }
 
       it_behaves_like 'a successfull request'
 
@@ -67,10 +90,14 @@ describe Api::TodoListsController do
   end
 
   describe 'show' do
+    subject(:make_request) { get(:show, params:, format:) }
+
+    let(:params) { { id: todo_list.id } }
+
     it_behaves_like 'rejecting not supported mime formats'
 
     context 'when format is JSON' do
-      before { get(:show, params:, format: :json) }
+      before { make_request }
 
       context 'when resource does not exist' do
         let(:params) { { id: 99 } }
@@ -81,7 +108,6 @@ describe Api::TodoListsController do
       end
 
       context 'when resource exists' do
-        let(:params) { { id: todo_list.id } }
         let(:expected_todo_list) { todo_list }
 
         it_behaves_like 'a successfull request'
@@ -91,12 +117,14 @@ describe Api::TodoListsController do
   end
 
   describe 'create' do
+    subject(:make_request) { post(:create, params:, format:) }
+
+    let(:params) { { todolist: { name: 'Shopping List' } } }
+
     it_behaves_like 'rejecting not supported mime formats'
 
     context 'when format is JSON' do
-      before { post(:create, params:, format: :json) }
-
-      let(:params) { { todolist: { name: 'Shopping List' } } }
+      before { make_request }
 
       context 'with valid parameters' do
         let(:expected_todo_list) { TodoList.find_by!(name: 'Shopping List') }
@@ -105,18 +133,42 @@ describe Api::TodoListsController do
         it_behaves_like 'returning a todo list record'
       end
 
-      context 'when :todolist is empty' do
-        let(:params) { { todolist: {} } }
-        let(:expected_status_code) { :bad_request }
-        let(:expected_errors) { 'param is missing or the value is empty: todolist' }
+      it_behaves_like 'a request with invalid parameters'
+    end
+  end
 
-        it_behaves_like 'an invalid request'
+  describe 'update' do
+    subject(:make_request) { put(:update, params:, format:) }
+
+    let(:params) do
+      {
+        id: todo_list.id,
+        todolist: {
+          name: 'New shopping list'
+        }
+      }
+    end
+
+    it_behaves_like 'rejecting not supported mime formats'
+
+    context 'when format is JSON' do
+      before { make_request }
+
+      context 'when resource exists' do
+        context 'with valid parameters' do
+          let(:expected_todo_list) { todo_list.reload }
+
+          it_behaves_like 'a successfull request'
+          it_behaves_like 'returning a todo list record'
+        end
+
+        it_behaves_like 'a request with invalid parameters'
       end
 
-      context 'when :name is empty' do
-        let(:params) { { todolist: { name: '' } } }
-        let(:expected_status_code) { :bad_request }
-        let(:expected_errors) { ['Name can\'t be blank'] }
+      context 'when resource does not exist' do
+        let(:params) { super().merge({ id: 99 }) }
+        let(:expected_status_code) { :not_found }
+        let(:expected_errors) { 'Record not found' }
 
         it_behaves_like 'an invalid request'
       end
