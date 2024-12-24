@@ -14,11 +14,34 @@ describe Api::TodoListsController do
     end
   end
 
-  shared_examples 'a successfull response' do
-    it 'returns a success code' do
-      get(:index, format: :json)
-
+  shared_examples 'a successfull request' do
+    it 'returns a success status code' do
       expect(response).to have_http_status(:success)
+    end
+  end
+
+  shared_examples 'an invalid request' do
+    it 'returns an error status code' do
+      expect(response).to have_http_status(expected_status_code)
+    end
+
+    it 'includes an error description' do
+      json_response = JSON.parse(response.body)
+
+      expect(json_response.keys).to include('errors')
+      expect(json_response['errors']).to eq(expected_errors)
+    end
+  end
+
+  shared_examples 'returning a todo list record' do
+    it 'returns a valid record' do
+      json_response = JSON.parse(response.body)
+
+      aggregate_failures 'includes the id and name' do
+        expect(json_response.keys).to include('name', 'id')
+        expect(json_response['name']).to eq(expected_todo_list.name)
+        expect(json_response['id']).to eq(expected_todo_list.id)
+      end
     end
   end
 
@@ -28,14 +51,14 @@ describe Api::TodoListsController do
     context 'when format is JSON' do
       before { get(:index, format: :json) }
 
-      it_behaves_like 'a successfull response'
+      it_behaves_like 'a successfull request'
 
       it 'includes todo list records' do
         todo_lists = JSON.parse(response.body)
 
         aggregate_failures 'includes the id and name' do
           expect(todo_lists.count).to eq(1)
-          expect(todo_lists[0].keys).to match_array(['id', 'name'])
+          expect(todo_lists[0].keys).to match_array(%w[id name])
           expect(todo_lists[0]['id']).to eq(todo_list.id)
           expect(todo_lists[0]['name']).to eq(todo_list.name)
         end
@@ -47,35 +70,55 @@ describe Api::TodoListsController do
     it_behaves_like 'rejecting not supported mime formats'
 
     context 'when format is JSON' do
+      before { get(:show, params:, format: :json) }
+
       context 'when resource does not exist' do
-        before { get(:show, params: { id: 99 }, format: :json) }
+        let(:params) { { id: 99 } }
+        let(:expected_status_code) { :not_found }
+        let(:expected_errors) { 'Record not found' }
 
-        it 'returns an error status' do
-          expect(response).to have_http_status(:not_found)
-        end
-
-        it 'includes an error description' do
-          json_response = JSON.parse(response.body)
-
-          expect(json_response.keys).to include('errors')
-          expect(json_response['errors']).to eq('Record not found')
-        end
+        it_behaves_like 'an invalid request'
       end
 
       context 'when resource exists' do
-        before { get(:show, params: { id: todo_list.id }, format: :json) }
+        let(:params) { { id: todo_list.id } }
+        let(:expected_todo_list) { todo_list }
 
-        it_behaves_like 'a successfull response'
+        it_behaves_like 'a successfull request'
+        it_behaves_like 'returning a todo list record'
+      end
+    end
+  end
 
-        it 'includes a todo list record' do
-          json_response = JSON.parse(response.body)
+  describe 'create' do
+    it_behaves_like 'rejecting not supported mime formats'
 
-          aggregate_failures 'includes the id and name' do
-            expect(json_response.keys).to include('name', 'id')
-            expect(json_response['name']).to eq(todo_list.name)
-            expect(json_response['id']).to eq(todo_list.id)
-          end
-        end
+    context 'when format is JSON' do
+      before { post(:create, params:, format: :json) }
+
+      let(:params) { { todolist: { name: 'Shopping List' } } }
+
+      context 'with valid parameters' do
+        let(:expected_todo_list) { TodoList.find_by!(name: 'Shopping List') }
+
+        it_behaves_like 'a successfull request'
+        it_behaves_like 'returning a todo list record'
+      end
+
+      context 'when :todolist is empty' do
+        let(:params) { { todolist: {} } }
+        let(:expected_status_code) { :bad_request }
+        let(:expected_errors) { 'param is missing or the value is empty: todolist' }
+
+        it_behaves_like 'an invalid request'
+      end
+
+      context 'when :name is empty' do
+        let(:params) { { todolist: { name: '' } } }
+        let(:expected_status_code) { :bad_request }
+        let(:expected_errors) { ['Name can\'t be blank'] }
+
+        it_behaves_like 'an invalid request'
       end
     end
   end
