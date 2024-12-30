@@ -1,6 +1,6 @@
 module Api
   class TodoListsController < ApplicationController
-    before_action :set_resource, only: %i[show update]
+    before_action :set_resource, only: %i[show update destroy]
 
     # GET /api/todolists
     def index
@@ -36,6 +36,13 @@ module Api
           render json: @todo_list
         end
       end
+    end
+
+    # DELETE /api/todolist/:id
+    def destroy
+      @todo_list.destroy!
+
+      head :no_content
     end
 
     private

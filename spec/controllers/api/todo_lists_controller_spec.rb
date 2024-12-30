@@ -18,8 +18,10 @@ describe Api::TodoListsController do
   end
 
   shared_examples 'a successfull request' do
-    it 'returns a success status code' do
-      expect(response).to have_http_status(:success)
+    let(:expected_status_code) { :success }
+
+    it 'returns a valid status code' do
+      expect(response).to have_http_status(expected_status_code)
     end
   end
 
@@ -34,6 +36,14 @@ describe Api::TodoListsController do
       expect(json_response.keys).to include('errors')
       expect(json_response['errors']).to eq(expected_errors)
     end
+  end
+
+  shared_examples 'a not found error' do
+    let(:params) { super().merge(id: 99) }
+    let(:expected_status_code) { :not_found }
+    let(:expected_errors) { 'Record not found' }
+
+    it_behaves_like 'an invalid request'
   end
 
   shared_examples 'returning a todo list record' do
@@ -100,11 +110,7 @@ describe Api::TodoListsController do
       before { make_request }
 
       context 'when resource does not exist' do
-        let(:params) { { id: 99 } }
-        let(:expected_status_code) { :not_found }
-        let(:expected_errors) { 'Record not found' }
-
-        it_behaves_like 'an invalid request'
+        it_behaves_like 'a not found error'
       end
 
       context 'when resource exists' do
@@ -166,12 +172,54 @@ describe Api::TodoListsController do
       end
 
       context 'when resource does not exist' do
-        let(:params) { super().merge({ id: 99 }) }
-        let(:expected_status_code) { :not_found }
-        let(:expected_errors) { 'Record not found' }
-
-        it_behaves_like 'an invalid request'
+        it_behaves_like 'a not found error'
       end
+    end
+  end
+
+  describe 'destroy' do
+    subject(:make_request) { delete(:destroy, params:, format:) }
+
+    let(:params) { { id: todo_list.id } }
+
+    it_behaves_like 'rejecting not supported mime formats'
+
+    context 'when format is JSON' do
+      before { make_request }
+
+      context 'when resource exists' do
+        let(:expected_status_code) { :no_content }
+
+        it_behaves_like 'a successfull request'
+
+        it 'deletes the record' do
+          expect { todo_list.reload }.to raise_error(ActiveRecord::RecordNotFound)
+        end
+      end
+
+      context 'when resource does not exist' do
+        it_behaves_like 'a not found error'
+      end
+    end
+
+    context 'when record fails to be destroyed' do
+      let(:expected_status_code) { :unprocessable_entity }
+      let(:expected_errors) do
+        "Failed to destroy TodoList with id=#{todo_list.id}"
+      end
+
+      before do
+        allow_any_instance_of(TodoList)
+          .to receive(:destroy!)
+          .and_raise(
+            ActiveRecord::RecordNotDestroyed,
+            expected_errors
+          )
+
+        make_request
+      end
+
+      it_behaves_like 'an invalid request'
     end
   end
 end
