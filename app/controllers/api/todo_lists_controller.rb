@@ -1,41 +1,32 @@
 module Api
-  class TodoListsController < ApplicationController
+  class TodoListsController < ApiController
     before_action :set_resource, only: %i[show update destroy]
 
     # GET /api/todolists
     def index
       @todo_lists = TodoList.all
 
-      respond_to :json
+      render json: @todo_lists
     end
 
     # GET /api/todolists/:id
     def show
-      respond_to :json
+      render json: @todo_list
     end
 
     # POST /api/todolists
     def create
       @todo_list = TodoList.new(required_params)
+      @todo_list.save!
 
-      respond_to do |format|
-        format.json do
-          @todo_list.save!
-
-          render json: @todo_list
-        end
-      end
+      render json: @todo_list
     end
 
     # PUT|PATCH /api/todolist/:id
     def update
-      respond_to do |format|
-        format.json do
-          @todo_list.update!(required_params)
+      @todo_list.update!(required_params)
 
-          render json: @todo_list
-        end
-      end
+      render json: @todo_list
     end
 
     # DELETE /api/todolist/:id
