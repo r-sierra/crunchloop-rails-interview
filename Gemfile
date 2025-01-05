@@ -69,5 +69,6 @@ group :test do
   gem "rspec"
   gem "capybara"
   gem "selenium-webdriver"
+  gem "shoulda-matchers", "~> 6.0"
   gem "webdrivers"
 end
