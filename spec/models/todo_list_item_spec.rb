@@ -6,7 +6,7 @@ describe TodoListItem do
   end
 
   describe 'validations' do
-    it { is_expected.to validate_presence_of(:description) }
-    it { is_expected.to validate_length_of(:description).is_at_most(255) }
+    it { is_expected.to validate_presence_of(:text) }
+    it { is_expected.to validate_length_of(:text).is_at_most(255) }
   end
 end
