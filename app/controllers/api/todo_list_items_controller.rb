@@ -1,8 +1,16 @@
 module Api
   class TodoListItemsController < ApiController
-    before_action :set_resource, only: %i[show]
+    before_action :set_resource, only: %i[show destroy]
 
+    # GET /api/todolist/:todo_list_id/items/:id
     def show; end
+
+    # DELETE /api/todolist/:todo_list_id/items/:id
+    def destroy
+      @todo_item.destroy!
+
+      head :no_content
+    end
 
     private
 
