@@ -1,6 +1,8 @@
 require 'rails_helper'
 
 describe Api::TodoListsController do
+  render_views
+
   let!(:todo_list) { TodoList.create(name: 'Setup RoR project') }
   let(:format) { :json }
 

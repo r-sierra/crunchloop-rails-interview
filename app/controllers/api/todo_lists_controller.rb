@@ -5,28 +5,24 @@ module Api
     # GET /api/todolists
     def index
       @todo_lists = TodoList.all
-
-      render json: @todo_lists
     end
 
     # GET /api/todolists/:id
-    def show
-      render json: @todo_list
-    end
+    def show; end
 
     # POST /api/todolists
     def create
       @todo_list = TodoList.new(required_params)
       @todo_list.save!
 
-      render json: @todo_list
+      render :show
     end
 
     # PUT|PATCH /api/todolist/:id
     def update
       @todo_list.update!(required_params)
 
-      render json: @todo_list
+      render :show
     end
 
     # DELETE /api/todolist/:id
