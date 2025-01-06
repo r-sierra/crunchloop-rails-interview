@@ -13,7 +13,7 @@
 ActiveRecord::Schema[7.0].define(version: 2025_01_05_232116) do
   create_table "todo_list_items", force: :cascade do |t|
     t.integer "todo_list_id", null: false
-    t.string "description", limit: 255, null: false
+    t.string "text", limit: 255, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["todo_list_id"], name: "index_todo_list_items_on_todo_list_id"
