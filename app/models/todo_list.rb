@@ -1,5 +1,5 @@
 class TodoList < ApplicationRecord
-  has_many :todo_list_items, dependent: :destroy
+  has_many :items, class_name: 'TodoListItem', dependent: :destroy
 
   validates :name, presence: true
 end

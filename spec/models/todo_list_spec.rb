@@ -2,7 +2,7 @@ require 'rails_helper'
 
 describe TodoList do
   describe 'associations' do
-    it { is_expected.to have_many(:todo_list_items).dependent(:destroy) }
+    it { is_expected.to have_many(:items).class_name('TodoListItem').dependent(:destroy) }
   end
 
   describe 'validations' do

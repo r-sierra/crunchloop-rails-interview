@@ -3,8 +3,16 @@ require 'rails_helper'
 describe Api::TodoListsController do
   render_views
 
-  let!(:todo_list) { TodoList.create(name: 'Setup RoR project') }
   let(:format) { :json }
+  let!(:todo_list) do
+    TodoList.create(
+      name: 'Setup RoR project',
+      items: [
+        TodoListItem.new(text: 'Item 1')
+      ]
+    )
+
+  end
 
   shared_examples 'rejecting not supported mime formats' do
     context 'when format is HTML' do
@@ -51,9 +59,16 @@ describe Api::TodoListsController do
       json_response = JSON.parse(response.body)
 
       aggregate_failures 'includes the id and name' do
-        expect(json_response.keys).to include('name', 'id')
+        expect(json_response.keys).to include('name', 'id', 'items')
         expect(json_response['name']).to eq(expected_todo_list.name)
         expect(json_response['id']).to eq(expected_todo_list.id)
+        if expected_todo_list.items.empty?
+          expect(json_response['items']).to eq([])
+        else
+          expect(json_response['items']).to include(
+            a_hash_including('id', 'text', 'created_at', 'updated_at')
+          )
+        end
       end
     end
   end
