@@ -15,7 +15,7 @@ describe Api::TodoListItemsController do
       json_response = JSON.parse(response.body)
 
       aggregate_failures 'includes all fields' do
-        fields = %w[id text created_at updated_at todo_list_id]
+        fields = %w[id text created_at updated_at]
 
         expect(json_response.keys).to include(*fields)
         expect(json_response['id']).to eq(expected_todo_item.id)

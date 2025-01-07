@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   namespace :api do
     resources :todo_lists, path: :todolists do
-      resources :todo_list_items, only: %i[show destroy create update], path: :items
+      resources :todo_list_items, path: :items
     end
   end
 

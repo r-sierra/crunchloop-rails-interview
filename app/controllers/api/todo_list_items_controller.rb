@@ -2,6 +2,11 @@ module Api
   class TodoListItemsController < ApiController
     before_action :set_resource, only: %i[show update destroy]
 
+    # GET /api/todolist/:todo_list_id/items
+    def index
+      @todo_items = TodoList.find(params[:todo_list_id]).items
+    end
+
     # GET /api/todolist/:todo_list_id/items/:id
     def show; end
 
